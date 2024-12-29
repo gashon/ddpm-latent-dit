@@ -1,0 +1,107 @@
+import argparse
+import os
+
+import torch
+import torch.optim as optim
+from torch.utils.data import DataLoader
+
+from dit.config import Config
+from dit.data.dataset import get_mnist_dataset
+from dit.models.autoencoder import Autoencoder
+from dit.models.diffusion import LatentDiffusion
+from dit.models.transformer import DiffusionTransformer
+from dit.utils.training_utils import AverageMeter, save_checkpoint
+
+
+def train_model(epochs: int, batch_size: int, lr: float):
+    device = Config.DEVICE
+
+    Config.EPOCHS = epochs
+    Config.BATCH_SIZE = batch_size
+    Config.LR = lr
+
+    train_dataset, _ = get_mnist_dataset(train=True)
+    train_loader = DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=True, drop_last=True
+    )
+
+    autoencoder = Autoencoder(
+        image_size=Config.IMAGE_SIZE, latent_dim=Config.LATENT_DIM
+    ).to(device)
+
+    diffusion_transformer = DiffusionTransformer(
+        latent_dim=Config.LATENT_DIM,
+        embed_dim=Config.TRANSFORMER_EMBED_DIM,
+        num_heads=Config.TRANSFORMER_NUM_HEADS,
+        hidden_dim=Config.TRANSFORMER_HIDDEN_DIM,
+        num_layers=Config.TRANSFORMER_NUM_LAYERS,
+    ).to(device)
+
+    diffusion_model = LatentDiffusion(
+        transformer=diffusion_transformer,
+        timesteps=Config.TIMESTEPS,
+        beta_start=Config.BETA_START,
+        beta_end=Config.BETA_END,
+    ).to(device)
+
+    ae_optimizer = optim.Adam(autoencoder.parameters(), lr=lr)
+    diffusion_optimizer = optim.Adam(diffusion_model.parameters(), lr=lr)
+
+    autoencoder.train()
+    diffusion_model.train()
+
+    for epoch in range(epochs):
+        loss_meter = AverageMeter()
+        for images, _ in train_loader:
+            images = images.to(device)
+
+            latents = autoencoder.encode(images)
+
+            loss = diffusion_model.training_step(latents)
+
+            diffusion_optimizer.zero_grad()
+            ae_optimizer.zero_grad()
+            loss.backward()
+            diffusion_optimizer.step()
+            ae_optimizer.step()
+
+            loss_meter.update(loss.item(), images.size(0))
+
+        print(f"Epoch [{epoch+1}/{epochs}] - Loss: {loss_meter.avg:.4f}")
+
+        save_path = os.path.join("checkpoints", f"model_epoch_{epoch+1}.pth")
+        os.makedirs("checkpoints", exist_ok=True)
+        save_checkpoint(
+            {
+                "epoch": epoch + 1,
+                "autoencoder_state": autoencoder.state_dict(),
+                "diffusion_state": diffusion_model.state_dict(),
+                "ae_optimizer_state": ae_optimizer.state_dict(),
+                "diffusion_optimizer_state": diffusion_optimizer.state_dict(),
+            },
+            save_path,
+        )
+
+    print("Training completed.")
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Latent Diffusion Transformer on MNIST"
+    )
+    parser.add_argument("--epochs", type=int, default=10, help="Number of epochs")
+    parser.add_argument("--batch_size", type=int, default=64, help="Batch size")
+    parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
+    parser.add_argument(
+        "--ckpt_path", type=str, default=None, help="Path to checkpoint for sampling"
+    )
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    train_model(epochs=args.epochs, batch_size=args.batch_size, lr=args.lr)
+
+
+if __name__ == "__main__":
+    main()
