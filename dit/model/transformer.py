@@ -104,3 +104,55 @@ class TransformerBlock(nn.Module):
         out = self.mlp(out)
 
         return self.norm2(x + out)
+
+
+class DiffusionTransformer(nn.Module):
+    def __init__(
+        self,
+        emb_dim: int,
+        latent_dim: int,
+        hidden_dim: int,
+        num_groups: int,
+        num_heads: int,
+        num_blocks: int,
+    ):
+        super().__init__()
+        self.input_proj = nn.Linear(latent_dim, emb_dim)
+
+        self.time_emb = nn.Linear(1, emb_dim)
+        self.blocks = nn.ModuleList(
+            [
+                TransformerBlock(
+                    emb_dim=emb_dim,
+                    hidden_dim=hidden_dim,
+                    num_heads=num_heads,
+                    num_groups=num_groups,
+                )
+                for _ in range(num_blocks)
+            ]
+        )
+
+        self.output_proj = nn.Linear(emb_dim, latent_dim)
+
+    def forward(self, latents: torch.Tensor, t: int):
+        """
+        latents: b, e
+        t: b
+        """
+        t = rearrange(t, "b -> b 1")
+        t_emb = self.time_emb(t)
+
+        x = self.input_proj(latents)  # b e
+
+        x = rearrange(x, "b e -> b 1 e")
+        t_emb = rearrange(t_emb, "b 1 -> b 1 1")
+
+        x = x + t_emb
+
+        for block in self.blocks:
+            x = block(x)
+
+        out = self.output_proj(x)
+        out = rearrange(out, "b 1 e -> b e")
+
+        return out
