@@ -9,7 +9,6 @@ from torch import nn
 class GQA(nn.Module):
     def __init__(
         self,
-        out_dim: int,
         hidden_dim: int,
         num_heads: int,
         num_groups: int,
@@ -36,7 +35,7 @@ class GQA(nn.Module):
         self.k_proj = nn.Linear(hidden_dim, hidden_dim)
         self.v_proj = nn.Linear(hidden_dim, hidden_dim)
 
-        self.out = nn.Linear(hidden_dim, out_dim)
+        self.out = nn.Linear(hidden_dim, hidden_dim)
 
     def forward(
         self,
@@ -77,3 +76,31 @@ class GQA(nn.Module):
 
         out = self.out(out)
         return out
+
+
+class TransformerBlock(nn.Module):
+    def __init__(self, hidden_dim: int, emb_dim: int, num_heads: int, num_groups: int):
+        super().__init__()
+
+        self.gqa = GQA(
+            hidden_dim=emb_dim,
+            num_heads=num_heads,
+            num_groups=num_groups,
+        )
+
+        self.mlp = nn.Sequential(
+            nn.Linear(emb_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, emb_dim),
+        )
+
+        self.norm1 = nn.LayerNorm(emb_dim)
+        self.norm2 = nn.LayerNorm(emb_dim)
+
+    def forward(self, x: torch.Tensor):
+        attn_out = self.gqa(x)
+
+        out = self.norm1(x + attn_out)
+        out = self.mlp(out)
+
+        return self.norm2(x + out)
