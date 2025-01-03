@@ -95,8 +95,8 @@ class GQA(nn.Module):
         k = self.k_proj(x)  # [b, s, d_model]
         v = self.v_proj(x)  # [b, s, d_model]
 
-        q = self.rope_fn(q)  # [b, s, d_model]
-        k = self.rope_fn(k)  # [b, s, d_model]
+        q = rope_fn(q)  # [b, s, d_model]
+        k = rope_fn(k)  # [b, s, d_model]
 
         q = rearrange(q, "b s (h d) -> b s h d", h=self.num_heads)
 
