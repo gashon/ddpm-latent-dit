@@ -64,7 +64,7 @@ class LatentDiffusion(nn.Module):
 
         return loss
 
-    def extract(self, a: torch.Tenor, t: torch.Tensor, x_shape: tuple):
+    def extract(self, a: torch.Tensor, t: torch.Tensor, x_shape: tuple):
         out = a.gather(-1, t)
         return out.view(-1, *[1] * (len(x_shape) - 1))
 
