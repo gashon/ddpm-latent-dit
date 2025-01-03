@@ -1,8 +1,5 @@
-import torch
 import torchvision
-from torchvision import transforms
 
-from dit.config import Config
 from dit.data.transforms import get_transforms
 
 
