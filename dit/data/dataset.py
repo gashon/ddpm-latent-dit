@@ -1,8 +1,9 @@
 import torch
 import torchvision
-from config import Config
-from data.transforms import get_transforms
 from torchvision import transforms
+
+from dit.config import Config
+from dit.data.transforms import get_transforms
 
 
 def get_mnist_dataset(train=True):
