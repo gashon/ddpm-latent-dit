@@ -191,7 +191,7 @@ class DiffusionTransformer(nn.Module):
         x = self.input_proj(latents)  # b e
 
         x = rearrange(x, "b e -> b 1 e")
-        t_emb = rearrange(t_emb, "b 1 -> b 1 1")
+        t_emb = rearrange(t_emb, "b d -> b 1 d")
 
         x = x + t_emb
 
