@@ -40,7 +40,7 @@ def sample_images(ckpt_path, num_samples=16):
     ).to(Config.DEVICE)
     diffusion_transformer = DiffusionTransformer(
         latent_dim=Config.LATENT_DIM,
-        embed_dim=Config.TRANSFORMER_EMBED_DIM,
+        emb_dim=Config.TRANSFORMER_EMBED_DIM,
         num_heads=Config.TRANSFORMER_NUM_HEADS,
         hidden_dim=Config.TRANSFORMER_HIDDEN_DIM,
         num_layers=Config.TRANSFORMER_NUM_LAYERS,
