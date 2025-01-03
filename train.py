@@ -9,9 +9,9 @@ from tqdm import tqdm
 
 from dit.config import Config
 from dit.data.dataset import get_mnist_dataset
-from dit.models.autoencoder import Autoencoder
-from dit.models.diffusion import LatentDiffusion
-from dit.models.transformer import DiffusionTransformer
+from dit.model.autoencoder import Autoencoder
+from dit.model.diffusion import LatentDiffusion
+from dit.model.transformer import DiffusionTransformer
 from dit.utils.training_utils import AverageMeter, save_checkpoint
 
 

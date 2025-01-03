@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import torch
 
 from dit.config import Config
-from dit.models.autoencoder import Autoencoder
-from dit.models.diffusion import LatentDiffusion
-from dit.models.transformer import DiffusionTransformer
+from dit.model.autoencoder import Autoencoder
+from dit.model.diffusion import LatentDiffusion
+from dit.model.transformer import DiffusionTransformer
 
 
 class AverageMeter:
