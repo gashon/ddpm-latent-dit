@@ -1,5 +1,5 @@
 import math
-from types import Callable
+from typing import Callable
 
 import torch
 from einops import rearrange
