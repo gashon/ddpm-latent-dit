@@ -1,9 +1,15 @@
 [project]
 name = "ddpm-latent-dit"
 version = "0.1.0"
-description = "Add your description here"
+description = "PyTorch-based implementation of Denoising Diffusion Probabilistic Models (DDPM) with latent spaces for scalable image generation."
 readme = "README.md"
-dependencies = []
+dependencies = [
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "einops==0.8.0",
+    "matplotlib==3.10.0",
+    "tqdm==4.67.1"
+]
 
 [tool.uv]
 dev-dependencies = []
