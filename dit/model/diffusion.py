@@ -57,7 +57,7 @@ class LatentDiffusion(nn.Module):
         noise = torch.randn_like(x_0)
         x_t = self.q_sample(x_0, t)
 
-        noise_pred = self.transformer(x_t, t)
+        noise_pred = self.transformer(x_t, t.float())
         loss = F.mse_loss(noise, noise_pred)
 
         return loss
@@ -77,7 +77,7 @@ class LatentDiffusion(nn.Module):
         )
         sqrt_alphas_cumprod_t = self.extract(self.sqrt_alphas_cumprod, t, x_t.shape)
 
-        noise_pred = self.transformer(x_t, t)
+        noise_pred = self.transformer(x_t, t.float())
 
         # x_{t-1} = 1/sqrt(alpha_t) * ( x_t - (1 - alpha_t) * noise_pred / sqrt(1 - alpha_cumprod_t) ) + sqrt(beta_t) * z
         alpha_t = 1.0 - betas_t
