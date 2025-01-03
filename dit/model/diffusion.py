@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,8 +11,8 @@ class LatentDiffusion(nn.Module):
         self.transformer = transformer
         self.timesteps = timesteps
 
-        self.betas = torch.linspace(beta_start, beta_end, timesteps)
-        alphas = 1 - self.betas
+        betas = torch.linspace(beta_start, beta_end, timesteps)
+        alphas = 1 - betas
         alphas_cumprod = torch.cumprod(alphas, dim=0)
 
         self.register_buffer("betas", betas)
