@@ -1,9 +1,58 @@
 import math
-from typing import Callable
 
 import torch
 from einops import rearrange
 from torch import nn
+
+
+def rope_fn(x: torch.Tensor, base: float = 10000.0) -> torch.Tensor:
+    b, s, d = x.shape
+    assert d % 2 == 0, "RoPE requires the hidden dimension to be even."
+    half_d = d // 2
+
+    # Split the last dimension into two parts
+    x1 = x[..., :half_d]  # [b, s, half_d]
+    x2 = x[..., half_d:]  # [b, s, half_d]
+
+    # Position indices: shape [s, 1]
+    pos = torch.arange(s, device=x.device, dtype=x.dtype).unsqueeze(-1)
+
+    # Compute rotation frequencies: shape [half_d/2]
+    #   freq_seq[i] = 1 / (base^(2i / d))
+    freq_seq = torch.arange(0, half_d, 2, device=x.device, dtype=x.dtype)
+    freq_seq = 1.0 / (base ** (freq_seq / half_d))  # [half_d/2]
+
+    # angles: [s, half_d/2]
+    angles = pos * freq_seq.unsqueeze(0)
+
+    # Precompute sin & cos
+    sin = torch.sin(angles)  # [s, half_d/2]
+    cos = torch.cos(angles)  # [s, half_d/2]
+
+    # For proper broadcasting:
+    #   we want [b, s, half_d] for each sin, cos
+    #   but sin and cos currently are [s, half_d/2].
+    # We next expand to [s, half_d/2, 1] and then broadcast over batch b:
+    sin = rearrange(sin, "s m -> 1 s m 1")
+    cos = rearrange(cos, "s m -> 1 s m 1")
+
+    # Reshape x1 and x2 to align with the sin/cos dims
+    # x1, x2: [b, s, half_d] -> [b, s, half_d/2, 1]
+    x1 = rearrange(x1, "b s (m) -> b s (m // 2) 1", m=half_d)
+    x2 = rearrange(x2, "b s (m) -> b s (m // 2) 1", m=half_d)
+
+    # Apply rotary transformation
+    #   x_rot_1 = x1 * cos - x2 * sin
+    #   x_rot_2 = x2 * cos + x1 * sin
+    x1_rot = x1 * cos - x2 * sin
+    x2_rot = x2 * cos + x1 * sin
+
+    # Bring x1_rot, x2_rot back to [b, s, half_d]
+    x1_rot = rearrange(x1_rot, "b s m 1 -> b s m")
+    x2_rot = rearrange(x2_rot, "b s m 1 -> b s m")
+
+    # Concatenate along the last dimension -> [b, s, d]
+    return torch.cat([x1_rot, x2_rot], dim=-1)
 
 
 class GQA(nn.Module):
@@ -12,7 +61,6 @@ class GQA(nn.Module):
         hidden_dim: int,
         num_heads: int,
         num_groups: int,
-        rope_fn: Callable,
     ):
         super().__init__()
 
@@ -28,8 +76,6 @@ class GQA(nn.Module):
 
         self.qdim = hidden_dim // num_heads  # = d_q
         self.kvdim = hidden_dim // num_groups  # = d_kv
-
-        self.rope_fn = rope_fn
 
         self.q_proj = nn.Linear(hidden_dim, hidden_dim)
         self.k_proj = nn.Linear(hidden_dim, hidden_dim)
