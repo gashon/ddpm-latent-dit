@@ -11,7 +11,8 @@ class Config:
     BETA_END = 0.02
 
     TRANSFORMER_EMBED_DIM = 64
-    TRANSFORMER_NUM_HEADS = 4
+    TRANSFORMER_NUM_HEADS = 4  # number of query heads
+    TRANSFORMER_NUM_GROUPS = 2  # number of kv heads
     TRANSFORMER_HIDDEN_DIM = 128
     TRANSFORMER_NUM_LAYERS = 4
 

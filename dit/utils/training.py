@@ -43,7 +43,8 @@ def sample_images(ckpt_path, num_samples=16):
         emb_dim=Config.TRANSFORMER_EMBED_DIM,
         num_heads=Config.TRANSFORMER_NUM_HEADS,
         hidden_dim=Config.TRANSFORMER_HIDDEN_DIM,
-        num_layers=Config.TRANSFORMER_NUM_LAYERS,
+        num_blocks=Config.TRANSFORMER_NUM_LAYERS,
+        num_groups=Config.TRANSFORMER_NUM_GROUPS,
     ).to(Config.DEVICE)
     diffusion_model = LatentDiffusion(
         transformer=diffusion_transformer,

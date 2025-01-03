@@ -104,6 +104,7 @@ def train_model(epochs: int, batch_size: int, lr: float):
         num_heads=Config.TRANSFORMER_NUM_HEADS,
         hidden_dim=Config.TRANSFORMER_HIDDEN_DIM,
         num_blocks=Config.TRANSFORMER_NUM_LAYERS,
+        num_groups=Config.TRANSFORMER_NUM_GROUPS,
     ).to(device)
 
     diffusion_model = LatentDiffusion(
