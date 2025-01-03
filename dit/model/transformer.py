@@ -38,8 +38,9 @@ def rope_fn(x: torch.Tensor, base: float = 10000.0) -> torch.Tensor:
 
     # Reshape x1 and x2 to align with the sin/cos dims
     # x1, x2: [b, s, half_d] -> [b, s, half_d/2, 1]
-    x1 = rearrange(x1, "b s (m) -> b s (m // 2) 1", m=half_d)
-    x2 = rearrange(x2, "b s (m) -> b s (m // 2) 1", m=half_d)
+    half_d2 = half_d // 2
+    x1 = rearrange(x1, "b s m -> b s m2 1", m=half_d, m2=half_d2)
+    x2 = rearrange(x2, "b s m -> b s m2 1", m=half_d, m2=half_d2)
 
     # Apply rotary transformation
     #   x_rot_1 = x1 * cos - x2 * sin
