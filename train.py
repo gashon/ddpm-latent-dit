@@ -12,7 +12,7 @@ from dit.data.dataset import get_mnist_dataset
 from dit.model.autoencoder import Autoencoder
 from dit.model.diffusion import LatentDiffusion
 from dit.model.transformer import DiffusionTransformer
-from dit.utils.training_utils import AverageMeter, save_checkpoint
+from dit.utils.training import AverageMeter, save_checkpoint
 
 
 def get_logger(name=__name__):
